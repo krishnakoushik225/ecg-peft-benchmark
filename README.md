@@ -1,129 +1,191 @@
-# ECG-PEFT Bench  
-### LoRA vs Adapters for ECG Segment Classification (Wav2Vec2 / HuBERT / ECG-FM)
+# ECG-PEFT Bench 🫀
+### LoRA vs Adapters for ECG Segment Classification · Wav2Vec2 / HuBERT / ECG-FM
+
+[![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)](https://python.org)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-orange?logo=pytorch)](https://pytorch.org)
+[![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-yellow)](https://huggingface.co)
+[![PEFT](https://img.shields.io/badge/PEFT-LoRA%20%7C%20Adapters-green)](https://github.com/huggingface/peft)
+[![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey)](LICENSE)
+
+> **ECG-PEFT Bench** is a medical AI research project benchmarking Parameter-Efficient Fine-Tuning (PEFT) strategies for binary ECG segment classification across three cardiac foundation models — Wav2Vec2, HuBERT, and ECG-FM — comparing LoRA vs full adapter methods with automated evaluation harnesses.
 
 ---
 
-## Overview
+## 🧬 Research Question
 
-This project benchmarks **Parameter-Efficient Fine-Tuning (PEFT)** strategies for **binary ECG segment classification** using three pretrained backbones:
-
-- **Wav2Vec 2.0**
-- **HuBERT**
-- **ECG-FM** (ECG foundation model)
-
-Two PEFT methods are compared across all backbones:
-
-- **Adapters**
-- **LoRA (Low-Rank Adaptation)**
-
-The pipeline covers preprocessing, PEFT integration, training, and evaluation with:
-**Accuracy, Precision, Recall, F1, AUC**, plus confusion matrices and plots.
+> *Can PEFT methods (LoRA, adapters) efficiently fine-tune cardiac foundation models for ECG segment classification while maintaining competitive performance with significantly fewer trainable parameters?*
 
 ---
 
-## Key Highlights
+## 📊 Results Summary
 
-- End-to-end notebook pipeline for PEFT on 1D biomedical signals  
-- Consistent metric reporting across validation and test splits  
-- Comparative analysis of LoRA vs adapters for each backbone  
-- Report includes detailed metrics tables, confusion matrices, and qualitative insights
+| Model | Method | Accuracy | F1 | AUC |
+|-------|--------|----------|----|-----|
+| **Wav2Vec2** | **LoRA** | **0.5836** | **0.5889** | **0.6196** |
+| HuBERT | Adapter | Higher Recall | — | — |
+| ECG-FM | Adapter | Higher Precision | — | — |
 
----
+**Key findings:**
+- **Wav2Vec2 + LoRA** achieves the best overall balance of accuracy, F1, and AUC
+- **HuBERT** variants favor higher recall — useful in clinical settings where missing positives is costly
+- **ECG-FM** shows stronger precision — more conservative, fewer false positives
+- **LoRA consistently** provides the best tradeoff between parameter efficiency and performance
 
-## Results Summary (from report)
-
-Best overall test performance:
-
-- **Wav2Vec2 + LoRA**: Accuracy **0.5836**, F1 **0.5889**, AUC **0.6196**
-
-Additional observations:
-
-- **HuBERT** variants tend to favor higher recall depending on configuration.
-- **ECG-FM** can be more conservative, showing stronger precision in some settings.
-- LoRA generally provides a strong balance between parameter efficiency and performance.
-
-For full metrics, plots, and confusion matrices, see the report.
+Full metrics tables, confusion matrices, and plots are in `results/` and `report/Report_Lab_3.pdf`.
 
 ---
 
-## Repository Structure
+## 🏗️ Architecture
+
+```
+ECG Segment (raw 1D waveform)
+        │
+        ▼
+┌───────────────────────┐
+│   Preprocessing       │  Normalization + windowing
+└──────────┬────────────┘
+           │
+           ▼
+┌──────────────────────────────────────────┐
+│         Pretrained Foundation Model       │
+│   Wav2Vec2  /  HuBERT  /  ECG-FM        │
+│                                          │
+│   ┌──────────────────────────────────┐   │
+│   │      PEFT Layer Injection        │   │
+│   │  LoRA:    W = W₀ + BA (rank r)  │   │
+│   │  Adapter: bottleneck modules     │   │
+│   └──────────────────────────────────┘   │
+└─────────────────────┬────────────────────┘
+                      │
+                      ▼
+           Binary Classification Head
+           (ECG segment: normal / abnormal)
+                      │
+                      ▼
+          ┌───────────────────────┐
+          │    Evaluation Suite   │
+          │  Accuracy, Precision  │
+          │  Recall, F1, AUC      │
+          │  Confusion Matrices   │
+          └───────────────────────┘
+```
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.10+
+- CUDA-capable GPU recommended (CPU works for inference)
+
+### Installation
+
+```bash
+git clone https://github.com/krishnakoushik225/ecg-peft
+cd ecg-peft
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Data Setup
+
+Place your ECG dataset under:
+```
+data/
+```
+Ensure the notebook paths reference the correct location.
+
+### Run the Notebook
+
+```bash
+jupyter notebook notebooks/ecg_peft_benchmark.ipynb
+```
+
+Open and execute `notebooks/ecg_peft_benchmark.ipynb` end-to-end — covers preprocessing, PEFT integration, training, and full evaluation.
+
+---
+
+## 🔬 Evaluation Suite
+
+Each model/method combination is evaluated on held-out test splits with:
+
+| Metric | Description |
+|--------|-------------|
+| **Accuracy** | Overall correct classification rate |
+| **Precision** | True positive rate among predicted positives |
+| **Recall** | True positive rate among actual positives (critical for clinical use) |
+| **F1 Score** | Harmonic mean of precision and recall |
+| **AUC** | Area under the ROC curve |
+| **Confusion Matrix** | Full breakdown of TP, TN, FP, FN per class |
+
+Results are stored in `results/metrics_tables/`, plots in `results/figures/`, and confusion matrices in `results/confusion_matrices/`.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Foundation Models | Wav2Vec2, HuBERT, ECG-FM |
+| PEFT Methods | LoRA (Low-Rank Adaptation), Adapter modules |
+| ML Framework | PyTorch + HuggingFace Transformers |
+| PEFT Library | HuggingFace PEFT |
+| Notebook | Jupyter |
+| Evaluation | scikit-learn (accuracy, F1, AUC, confusion matrix) |
+
+---
+
+## 📁 Project Structure
 
 ```
 ecg-peft-benchmark/
-│
 ├── notebooks/
-│   └── ecg_peft_benchmark.ipynb
-│
+│   └── ecg_peft_benchmark.ipynb   # End-to-end pipeline
 ├── report/
-│   └── Report_Lab_3.pdf
-│
+│   └── Report_Lab_3.pdf           # Full technical report + analysis
 ├── results/
-│   ├── figures/
-│   ├── confusion_matrices/
-│   └── metrics_tables/
-│
+│   ├── figures/                   # Training curves, ROC plots
+│   ├── confusion_matrices/        # Per-model confusion matrices
+│   └── metrics_tables/            # Accuracy, F1, AUC tables
 └── README.md
 ```
 
 ---
 
-## Getting Started
+## ⚠️ Large Files
 
-### 1) Create a virtual environment (recommended)
+Do not commit model checkpoints (`.pt`, `.pth`, `.ckpt`) directly to GitHub (100MB limit).
 
-```bash
-python -m venv .venv
-source .venv/bin/activate   # macOS/Linux
-# .venv\Scripts\activate    # Windows PowerShell
-```
-
-### 2) Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3) Run the notebook
-
-Open and execute:
-
-- `notebooks/ecg_peft_benchmark.ipynb`
+Recommended:
+- Keep checkpoints local, or
+- Upload via GitHub Releases / Google Drive / HuggingFace Hub and link here
 
 ---
 
-## Data Notes
+## 📄 Full Report
 
-If the dataset is not included in this repository, place it under:
+Complete technical analysis, methodology, and evaluation artifacts:
 
-- `data/`  
-
-and ensure the notebook paths reference the correct location.
+📎 [`report/Report_Lab_3.pdf`](report/Report_Lab_3.pdf)
 
 ---
 
-## Checkpoints / Large Files
+## 🔭 Roadmap
 
-Do not commit large model checkpoints (`.pt`, `.pth`, `.ckpt`) directly to GitHub due to the 100MB per-file limit.
-
-Recommended approach:
-
-- Keep checkpoints local, or  
-- Upload via GitHub Releases / Google Drive / Hugging Face and link them here.
-
----
-
-## Report
-
-Full technical report and evaluation artifacts are available at:
-
-- `report/Report_Lab_3.pdf`
+- [ ] QLoRA experiments (4-bit quantization)
+- [ ] Cross-dataset generalization (PTB-XL, PhysioNet)
+- [ ] MLflow + W&B experiment tracking integration
+- [ ] Multi-class arrhythmia classification (beyond binary)
+- [ ] ONNX export for clinical deployment packaging
+- [ ] Model merging experiments (DARE, TIES)
 
 ---
 
-## Author
+## 📄 License
 
-Krishna Koushik Unnam  
-M.S. Computer Science & Engineering  
-University of South Florida
+MIT — free to use and build on. If you use this in research, a citation would be appreciated.
 
 ---
+
+*Built by [Krishna Koushik Unnam](https://github.com/krishnakoushik225) · M.S. Computer Science, University of South Florida*

@@ -150,17 +150,6 @@ ecg-peft-benchmark/
 │   └── metrics_tables/            # Accuracy, F1, AUC tables
 └── README.md
 ```
-
----
-
-## ⚠️ Large Files
-
-Do not commit model checkpoints (`.pt`, `.pth`, `.ckpt`) directly to GitHub (100MB limit).
-
-Recommended:
-- Keep checkpoints local, or
-- Upload via GitHub Releases / Google Drive / HuggingFace Hub and link here
-
 ---
 
 ## 📄 Full Report

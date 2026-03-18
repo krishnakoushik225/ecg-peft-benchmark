@@ -43,7 +43,7 @@ graph TD
 
     G --> H[Native 600-sample input<br/>no resampling — 1kHz ECG-native]
 
-    E --> F[Frozen Transformer Backbone<br/>~94.4M params — zero grad updates]
+    E --> F[Frozen Transformer Backbone<br/>~94.6M–95.2M params — zero grad updates]
     H --> F
 
     F --> I{PEFT Strategy?}
@@ -76,6 +76,8 @@ graph TD
 
 All results on the **held-out test set** (9,814 samples, ~49.8% positive — balanced).
 
+> **On baseline performance:** Wav2Vec2 and HuBERT were pretrained on speech audio, not ECG signals. The observed AUC range (0.59–0.62) directly reflects this domain transfer gap — these models have never seen cardiac waveforms during pretraining. The benchmark's primary contribution is the **controlled comparison methodology**: holding data, splits, seed, and training config constant across all six configurations isolates exactly how much each backbone and PEFT strategy contributes under cross-domain transfer constraints — which remains an open research problem in medical AI.
+
 | Model | Method | Accuracy | Precision | Recall | F1 | AUC-ROC |
 |---|---|---|---|---|---|---|
 | **Wav2Vec2** | **LoRA** | **0.5836** | **0.5797** | 0.5983 | **0.5889** | **0.6196** |
@@ -83,11 +85,13 @@ All results on the **held-out test set** (9,814 samples, ~49.8% positive — bal
 | HuBERT | LoRA | 0.5636 | 0.5458 | 0.7420 | 0.6290 | 0.6027 |
 | HuBERT | Adapter | 0.5348 | 0.5202 | **0.8592** | 0.6481 | 0.5886 |
 
+![ECG-PEFT Results](docs/results-comparison.png)
+
 **Key findings:**
 - **Wav2Vec2 + LoRA** — best balanced performance across all metrics. Best choice for screening where both error types carry cost.
 - **HuBERT + Adapter** — highest recall (0.859). Catches the most true positives. Appropriate for high-sensitivity triage where missing a cardiac event is clinically unacceptable.
 - **HuBERT + LoRA** — middle ground: recall=0.742 with meaningfully better precision than the full adapter variant.
-- **LoRA consistently outperforms** on AUC across both Wav2Vec2 and HuBERT, suggesting low-rank weight updates generalize better than head-only adaptation for this task.
+- **LoRA consistently outperforms** on AUC across both Wav2Vec2 and HuBERT, suggesting low-rank weight updates generalize better than head-only adaptation for this cross-domain task.
 
 📎 Full methodology, ablations, and per-model analysis: [`report/ecg-peft-benchmark-report.pdf`](report/ecg-peft-benchmark-report.pdf)
 
@@ -186,15 +190,17 @@ Frozen backbone:                       94,568,833 params   (zero grad updates)
 ```
 ecg-peft-benchmark/
 ├── notebooks/
-│   └── lab_3.ipynb                  # End-to-end pipeline — all 6 configurations
+│   └── lab_3.ipynb                    # End-to-end pipeline — all 6 configurations
 ├── report/
 │   └── ecg-peft-benchmark-report.pdf  # Full technical report
 ├── results/
-│   ├── figures/                     # Training curves, ROC plots
-│   ├── confusion_matrices/          # Per-model confusion matrix heatmaps
-│   └── metrics_tables/              # Accuracy, F1, AUC summary tables
+│   ├── figures/                       # Training curves, ROC plots
+│   ├── confusion_matrices/            # Per-model confusion matrix heatmaps
+│   └── metrics_tables/                # Accuracy, F1, AUC summary tables
 ├── docs/
-│   └── architecture.md              # Deep-dive: implementation details & design decisions
+│   ├── architecture.md                # Deep-dive: implementation details & design decisions
+│   └── results-comparison.png         # Publication-quality results figure
+├── generate_results_figure.py         # Reproducible figure generation script
 └── README.md
 ```
 
@@ -230,4 +236,4 @@ MIT — free to use and build on. If you use this in research, a citation would 
 
 ---
 
-*Built by [Krishna Koushik Unnam](https://github.com/krishnakoushik225) · M.S. Trustworthy AI, University of South Florida*
+*Built by [Krishna Koushik Unnam](https://github.com/krishnakoushik225)*
